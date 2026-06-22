@@ -4,22 +4,23 @@ import generateToken from "../utils/generateToken.js";
 //! register
 const register = async (req, res) => {
     try {
+        //* validate fields
         const { name, email, password } = req.body;
 
         if (!name || !email || !password) {
             return res.status(400).json({
-                status: false,
-                message: "Please name, email and password"
+                success: false,
+                message: "Please provide name, email and password"
             })
         }
 
-        // find user
+        //* find user
         const userExists = await User.findOne({ email });
         if (userExists) {
             return res.status(409).json({ message: "User already exists" });
         }
 
-        // create user
+        //* create user and assign token
         const user = await User.create({ name, email, password });
 
         // token and cookie
@@ -27,7 +28,8 @@ const register = async (req, res) => {
 
         res.cookie("token", token, {
             httpOnly: true,
-            maxAge: 5 * 60 * 100
+            maxAge: 60 * 60 * 1000,
+            secure: true,
         })
 
         // return user data
@@ -48,6 +50,7 @@ const register = async (req, res) => {
 //! login
 const login = async (req, res) => {
     try {
+        //* validate fields
         const { email, password } = req.body;
 
         if (!email || !password) {
@@ -57,7 +60,7 @@ const login = async (req, res) => {
             })
         }
 
-        // find user
+        //* find user
         const user = await User.findOne({ email })
         if (!user) {
             return res.status(401).json({
@@ -65,6 +68,7 @@ const login = async (req, res) => {
             })
         }
 
+        //* verify user and assing token
         const isMatch = await user.matchPassword(password)
         if (!isMatch) {
             return res.status(401).json({
@@ -77,7 +81,8 @@ const login = async (req, res) => {
 
         res.cookie("token", token, {
             httpOnly: true,
-            maxAge: 5 * 60 * 1000,
+            maxAge: 60 * 60 * 1000,
+            secure: true,
         })
 
         // return user data
@@ -100,12 +105,13 @@ const login = async (req, res) => {
 const logout = async (req, res) => {
     try {
         // clearing cookies
-        res.cookie("token", "", {
+        res.cookie("token", "", { // or res.clearCookie("token")
             httpOnly: true,
-            maxAge: 1
+            maxAge: new Date(0),
+            secure: true
         })
 
-        res.status(200).json({
+        res.status(204).json({
             success: true,
             message: "Logged out successfully"
         })
@@ -124,6 +130,13 @@ const getMe = async (req, res) => {
     try {
         // find user
         const user = await User.findById(req.user.id)
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
+        }
 
         res.status(200).json({
             success: true,

@@ -15,6 +15,13 @@ connectDB();
 
 app.use("/api/auth", authRoutes)
 
+app.get("/", (req, res) => {
+    res.status(200).json({
+        success: true,
+        message: "Welcome to the App"
+    })
+})
+
 app.listen(PORT, () => {
-    console.log(`Server is running at PORT: ${PORT}`);
+    console.log(`Server is running at 'http://localhost:${PORT}`);
 });

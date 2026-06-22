@@ -6,6 +6,7 @@ const userSchema = new mongoose.Schema(
         name: {
             type: String,
             required: [true, "Name is required"],
+            minlength: [6, "Name must contain at least 6 characters"],
             maxlength: [18, "Name cannot exceed 18 characters"],
             trim: true,
         },
@@ -32,8 +33,11 @@ const userSchema = new mongoose.Schema(
 
 // hash password before saving it
 userSchema.pre("save", async function () {
-    if (!this.isModified("password")) return;
-    this.password = await bcrypt.hash(this.password, 10);
+    if (this.isModified("password")) {
+        this.password = await bcrypt.hash(this.password, 10);
+    } else {
+        return;
+    }
 });
 
 // check password
